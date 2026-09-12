@@ -69,8 +69,11 @@ import {
   Heart,
   Languages as LanguagesIcon,
   Terminal,
-  Gem
+  Gem,
+  Download
 } from 'lucide-react';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { InstallModal } from '../pwa/InstallModal';
 import { 
   LiquidBackground, 
   DigitalGlow, 
@@ -157,6 +160,20 @@ const SettingsSystem = () => {
   } = useAeirmist();
   const { activeTheme, setTheme, isLoading: isThemeLoading } = useTheme();
   const isLight = activeTheme?.isLight;
+  const { isInstallable, install } = usePWAInstall();
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+
+  const handleInstallClick = async () => {
+    if (isInstallable) {
+      const res = await install();
+      if (res.outcome !== 'accepted') {
+        setInstallModalOpen(true);
+      }
+    } else {
+      setInstallModalOpen(true);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState<SettingsTab | null>(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
       return 'account';
@@ -556,6 +573,12 @@ const SettingsSystem = () => {
                   <SettingsTabItem active={activeTab === 'feedback'} onClick={() => setActiveTab('feedback')} icon={<MessageSquare />} label="Feedback" />
                   <SettingsTabItem active={activeTab === 'about'} onClick={() => setActiveTab('about')} icon={<Info />} label="About" />
                   <SettingsTabItem active={activeTab === 'developer'} onClick={() => setActiveTab('developer')} icon={<Terminal />} label="Developer" />
+                  <SettingsTabItem 
+                    active={false} 
+                    onClick={handleInstallClick} 
+                    icon={<Download className="text-aeirmist-cyan" />} 
+                    label="Install Phone App" 
+                  />
                 </SettingsSection>
 
                 {/* Mobile logout option at bottom of vertical menu */}
@@ -827,6 +850,8 @@ const SettingsSystem = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <InstallModal isOpen={installModalOpen} onClose={() => setInstallModalOpen(false)} />
     </div>
   );
 };

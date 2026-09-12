@@ -427,7 +427,6 @@ export const AuthSystem: React.FC = () => {
 
       setIsSuccess(true);
       if (navigator.vibrate) navigator.vibrate([30, 50]);
-      await new Promise(resolve => setTimeout(resolve, 1200));
     } catch (err: any) {
       setError(getContextualError(err.message || err.code));
       setShakeActive(true);
@@ -499,6 +498,10 @@ export const AuthSystem: React.FC = () => {
     setLoading(true);
     try {
       const userCredential = await loginWithProvider(providerName);
+      if (!userCredential) {
+        setLoading(false);
+        return;
+      }
       const userUid = (userCredential as any)?.user?.uid || (userCredential as any)?.uid;
       
       if (userUid) {
@@ -509,13 +512,13 @@ export const AuthSystem: React.FC = () => {
           setLoading(false);
           return;
         }
-        logger.security("Login Success", { uid: userUid }); await trackLoginSession(userUid);
+        logger.security("Login Success", { uid: userUid }); 
+        await trackLoginSession(userUid);
       }
 
       analytics.trackAuth('login', providerName);
       setIsSuccess(true);
       if (navigator.vibrate) navigator.vibrate([30, 50]);
-      await new Promise(resolve => setTimeout(resolve, 1200));
     } catch (err: any) {
       setError(getContextualError(err.message || err.code));
     } finally {

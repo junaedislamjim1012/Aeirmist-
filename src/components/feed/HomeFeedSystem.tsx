@@ -18,6 +18,7 @@ import { AeirmistLogo } from '../ui/AeirmistLogo';
 import { getAvatarUrl } from '../../lib/avatar';
 import { Skeleton } from '../ui/Skeleton';
 import { logger } from '@/src/utils/logger';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 
 export const HomeFeedSystem: React.FC<{ onUserClick?: (user: any) => void, onPostClick?: (postId: string) => void, onCreate?: () => void, onNavigate?: (tab: string) => void }> = React.memo(({ onUserClick, onPostClick, onCreate, onNavigate }) => {
@@ -270,7 +271,7 @@ export const HomeFeedSystem: React.FC<{ onUserClick?: (user: any) => void, onPos
           role="banner"
           className={`sticky top-0 z-[100] ${isGlobalBgActive ? 'bg-transparent' : 'bg-[#050505]/95'} backdrop-blur-xl flex md:hidden items-center justify-between pb-2.5 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] mb-1 px-4 border-b border-white/5`}
         >
-           <div className="flex items-center w-24 shrink-0">
+           <div className="flex items-center gap-1.5 shrink-0">
              <button 
               type="button"
               aria-label="Go to Marketplace"
@@ -282,6 +283,7 @@ export const HomeFeedSystem: React.FC<{ onUserClick?: (user: any) => void, onPos
            >
              <ShoppingBag size={18} className="drop-shadow-[0_0_6px_rgba(0,242,255,0.4)]" aria-hidden="true" />
            </button>
+           <PWAInstallButton variant="compact" />
            </div>
            <div className="flex-1 flex items-center justify-center z-0 pointer-events-none min-w-0 px-2">
              <h1 className="text-xl font-display font-black uppercase tracking-[0.2em] flex items-center gap-2 relative group">

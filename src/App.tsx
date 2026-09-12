@@ -21,6 +21,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Sparkles, Zap, Lock, AlertCircle, Clock } from 'lucide-react';
 import { AeirmistLogo } from './components/ui/AeirmistLogo';
 import { ReportProvider } from './components/reporting/ReportContext';
+import { PWAInstallBanner } from './components/pwa/PWAInstallBanner';
 
 // Aeirmist Core Component Architecture
 function toMathBoldScript(text: string): string {
@@ -1166,6 +1167,7 @@ function AppContent() {
           />
 
           <main id="main-content" className="flex-1 min-w-0 h-full relative overflow-hidden flex flex-col">
+            <PWAInstallBanner />
             <Suspense fallback={<LazyFallback />}>
               <Routes>
                 <Route path="/payment-success" element={<Suspense fallback={null}><PaymentResult status="success" /></Suspense>} />

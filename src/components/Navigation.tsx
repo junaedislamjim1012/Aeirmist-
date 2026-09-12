@@ -37,6 +37,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useAeirmist } from '../context/AeirmistContext';
 import { getAvatarUrl } from '../lib/avatar';
 import { AeirmistLogo } from './ui/AeirmistLogo';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { InstallModal } from './pwa/InstallModal';
 
 export type Tab = 'feed' | 'messenger' | 'discover' | 'profile' | 'settings' | 'videos' | 'dashboard' | 'notifications' | 'admin';
 
@@ -59,6 +61,21 @@ export const Navigation = React.memo(({ onCreate, activeTab, onTabChange, isExpa
   // Local hover state with beautiful, smart lock safety
   const [isHovered, setIsHovered] = React.useState(false);
   const collapseTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // PWA installation state
+  const { isStandalone, isInstallable, install } = usePWAInstall();
+  const [installModalOpen, setInstallModalOpen] = React.useState(false);
+
+  const handleInstallClick = React.useCallback(async () => {
+    if (isInstallable) {
+      const res = await install();
+      if (res.outcome !== 'accepted') {
+        setInstallModalOpen(true);
+      }
+    } else {
+      setInstallModalOpen(true);
+    }
+  }, [isInstallable, install]);
 
   const handleItemClick = React.useCallback((callback?: () => void) => {
     setIsHovered(false);
@@ -186,6 +203,15 @@ export const Navigation = React.memo(({ onCreate, activeTab, onTabChange, isExpa
           <NavItem icon={<PlusSquare />} label="New Post" isExpanded={isCurrentlyExpanded} onClick={() => handleItemClick(onCreate)} variant="accent" />
           <NavItem icon={<User />} label="Profile" active={activeTab === 'profile' && !isRemoteView} isExpanded={isCurrentlyExpanded} onClick={() => handleItemClick(() => onTabChange('profile'))} onMouseEnter={() => onPreload?.('profile')} />
           <NavItem icon={<Settings />} label="Settings" active={activeTab === 'settings'} isExpanded={isCurrentlyExpanded} onClick={() => handleItemClick(() => onTabChange('settings'))} onMouseEnter={() => onPreload?.('settings')} />
+          {!isStandalone && (
+            <NavItem 
+              icon={<Download />} 
+              label="Install App" 
+              isExpanded={isCurrentlyExpanded} 
+              onClick={() => handleItemClick(handleInstallClick)} 
+              variant="accent"
+            />
+          )}
           {(user?.email?.toLowerCase() === 'junaedislamjim180@gmail.com' || 
              profile?.email?.toLowerCase() === 'junaedislamjim180@gmail.com' || 
              profile?.username?.toLowerCase() === 'junaed_islam_jim9' ||
@@ -299,6 +325,8 @@ export const Navigation = React.memo(({ onCreate, activeTab, onTabChange, isExpa
           </motion.div>
         )}
       </AnimatePresence>
+
+      <InstallModal isOpen={installModalOpen} onClose={() => setInstallModalOpen(false)} />
     </>
   );
 });
