@@ -2866,6 +2866,10 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return new Error(`Authentication Denied: This login method is not yet enabled in the Aeirmist Registry. Please use Google or Email instead.`);
     }
 
+    if (errorCode === 'auth/unauthorized-domain') {
+      return new Error("Domain Unauthorized: This preview domain is not listed in Firebase Auth's Authorized Domains. Please use Email/Password sign-in or Guest Sandbox mode.");
+    }
+
     if (errorCode === 'auth/popup-blocked' || errorCode === 'auth/popup-closed-by-user' || errorCode === 'auth/cancelled-popup-request') {
        if (silentPopup) return err;
        return new Error("Connecting via secure channel... Please wait.");

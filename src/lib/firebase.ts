@@ -64,6 +64,19 @@ if (typeof window !== 'undefined') {
 
 export const db = firestoreInstance;
 
+async function testConnection() {
+  if (typeof window === 'undefined') return;
+  try {
+    const { doc, getDocFromServer } = await import('firebase/firestore');
+    await getDocFromServer(doc(db, '_connection_test_', 'status'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      logger.error("Please check your Firebase configuration.");
+    }
+  }
+}
+testConnection();
+
 export const storage = getStorage(app);
 
 export const isConfigValid = true;

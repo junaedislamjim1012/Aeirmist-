@@ -82,7 +82,7 @@ async function startServer() {
   app.set('trust proxy', 1);
 
   // 1. Production Security & Performance Hardening
-  app.use(compression());
+  app.use(compression() as any);
   // Eased security headers for development & production previews inside iframe
   app.use(helmet({
     contentSecurityPolicy: false,
@@ -152,7 +152,7 @@ async function startServer() {
       sameSite: sameSiteCookie,
       maxAge: 1000 * 60 * 60 * 24 // 24 hours
     }
-  }));
+  }) as any);
 
   // 3. Auth Middleware (Server-side Firebase Verification)
   const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {

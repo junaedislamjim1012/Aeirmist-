@@ -1,31 +1,49 @@
 import Redis from 'ioredis';
 import { logger } from '@/src/utils/logger';
 
+// In-memory fallback store when Redis is unavailable
+const memoryStore = new Map<string, string>();
 
-let redisClient: Redis | null = null;
+class MockRedis {
+  async get(key: string) { return memoryStore.get(key) ?? null; }
+  async set(key: string, value: string) { memoryStore.set(key, String(value)); return 'OK'; }
+  async del(key: string) { const ex = memoryStore.has(key); memoryStore.delete(key); return ex ? 1 : 0; }
+  async incr(key: string) {
+    const val = Number(memoryStore.get(key) || 0) + 1;
+    memoryStore.set(key, String(val));
+    return val;
+  }
+  async expire() { return 1; }
+  async ttl() { return -1; }
+  on() { return this; }
+}
 
-export function getRedisClient(): Redis {
+let redisClient: any = null;
+
+export function getRedisClient(): any {
   if (!redisClient) {
     const redisUrl = process.env.REDIS_URL;
     
     if (!redisUrl) {
-      // In development/preview without Redis, we can fallback to an in-memory mock or 
-      // just log a warning. For a production-ready system, a missing REDIS_URL should be an error.
-      logger.warn('REDIS_URL is not defined. Falling back to in-memory/limited mode.');
-      // For the purpose of this implementation, we assume Redis is required for "Scalable Architecture".
-      // We will provide a dummy one if it's not there to keep the app running in non-prod environments.
-      // But we will use the environment variable if present.
-      redisClient = new Redis(redisUrl || 'redis://localhost:6379', {
-        maxRetriesPerRequest: 3,
-        enableOfflineQueue: false
-      });
+      logger.info('[AI Studio] REDIS_URL is not defined. Using in-memory fallback for caching/rate-limiting.');
+      redisClient = new MockRedis();
     } else {
-      redisClient = new Redis(redisUrl);
+      try {
+        const client = new Redis(redisUrl, {
+          maxRetriesPerRequest: 1,
+          enableOfflineQueue: false,
+          retryStrategy: () => null // Don't retry indefinitely
+        });
+        client.on('error', (err) => {
+          logger.warn('Redis Connection Error - switching to in-memory fallback:', err.message);
+          redisClient = new MockRedis();
+        });
+        redisClient = client;
+      } catch {
+        redisClient = new MockRedis();
+      }
     }
-
-    redisClient.on('error', (err) => {
-      logger.error('Redis Connection Error:', err);
-    });
   }
   return redisClient;
 }
+

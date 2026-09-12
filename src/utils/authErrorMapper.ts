@@ -78,6 +78,9 @@ export function mapAuthError(error: any): string {
   if (c.includes('auth/popup-blocked')) {
     return "Sign-in popup was blocked by your browser. Please allow popups for Aeirmist.";
   }
+  if (c.includes('auth/unauthorized-domain')) {
+    return "This domain is not authorized in Firebase Auth. Please log in using Email & Password or Guest Sandbox mode below.";
+  }
 
   // If custom error message is available and readable, present it cleanly
   if (rawMessage && typeof rawMessage === 'string' && !rawMessage.startsWith('Firebase:')) {
