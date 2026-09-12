@@ -4,7 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     try {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      navigator.serviceWorker.register('./sw.js')
         .then((registration) => {
           logger.info('Service Worker registered successfully with scope:', registration.scope);
         })

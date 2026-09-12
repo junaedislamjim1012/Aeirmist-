@@ -1481,7 +1481,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <NetworkStatusProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/Aeirmist-">
           <ThemeProvider>
             <AeirmistProvider>
               <ReportProvider>
