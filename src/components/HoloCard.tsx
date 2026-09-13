@@ -13,6 +13,7 @@ import {
   Database
 } from 'lucide-react';
 import { PostMenu } from './PostMenu';
+import { getAvatarUrl } from '../lib/avatar';
 
 interface HoloCardProps {
   post: {
@@ -53,7 +54,7 @@ export const HoloCard: React.FC<HoloCardProps> = React.memo(({ post }) => {
             <div className="relative">
               <div className="absolute -inset-1.5 bg-gradient-to-tr from-aeirmist-cyan to-aeirmist-magenta rounded-full opacity-30 blur-md group-hover:opacity-100 transition-opacity duration-1000 animate-pulse" />
               <img 
-                src={post.authorPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.authorName}`} 
+                src={getAvatarUrl(post.authorPhoto, post.authorName)} 
                 alt={post.authorName} 
                 className="w-12 h-12 rounded-full border-2 border-white/20 relative z-10 object-cover shadow-[0_0_15px_rgba(0,0,0,0.5)]" 
                 referrerPolicy="no-referrer"

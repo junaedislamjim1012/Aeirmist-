@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { getAvatarUrl } from '../../lib/avatar';
 import { CameraTopBar } from '../camera/CameraTopBar';
 import { MediaEditor } from '../camera/MediaEditor';
 import { 
@@ -555,7 +556,7 @@ export const AeirmistCamera: React.FC<AeirmistCameraProps> = ({
             className="group relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/20 hover:scale-110 active:scale-95 transition-all outline-none"
           >
             {profile?.photoURL ? (
-                <img src={profile.photoURL} alt="Gallery" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                <img src={getAvatarUrl(profile.photoURL)} alt="Gallery" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
             ) : (
                 <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20">
                     <ImageIcon size={24} />

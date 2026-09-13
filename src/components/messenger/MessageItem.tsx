@@ -6,6 +6,7 @@ import { Message } from '../../types/messenger';
 import { VoicePlayback } from './VoicePlayback';
 import { Check, CheckCheck, Eye, EyeOff } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { formatShortTimestamp, formatTimeOnly } from '../../lib/date';
 import { SafeImage } from '../ui/SafeImage';
 
@@ -237,7 +238,7 @@ export const MessageItem = React.memo<{
 
   // Profile photo fallback
   const avatarUrl = React.useMemo(() => 
-    senderPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.senderId || 'anon'}`,
+    getAvatarUrl(senderPhoto, message.senderId),
     [message.senderId, senderPhoto]
   );
 

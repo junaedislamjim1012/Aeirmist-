@@ -2127,13 +2127,7 @@ export const StoryViewer = ({
                           return (
                             <div key={vId} className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] border border-white/5">
                               <div className="flex items-center gap-3">
-                                {p?.photoURL ? (
-                                  <img src={p.photoURL} className="w-10 h-10 rounded-xl object-cover" alt="" />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-white/10 to-white/5 flex items-center justify-center text-[10px] font-bold text-white/20">
-                                    {(p?.username || 'U').substring(0, 2).toUpperCase()}
-                                  </div>
-                                )}
+                                <img src={getAvatarUrl(p?.photoURL)} className="w-10 h-10 rounded-xl object-cover" alt="" />
                                 <div className="flex flex-col">
                                   <span className="text-sm font-bold text-white/80">{p?.username || p?.displayName || `User_${vId.substring(0, 6)}`}</span>
                                   <span className="text-[9px] text-white/30 uppercase font-black">Viewed Story</span>
@@ -2160,13 +2154,7 @@ export const StoryViewer = ({
                           return (
                             <div key={vId} className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] border border-white/5">
                               <div className="flex items-center gap-3">
-                                {p?.photoURL ? (
-                                  <img src={p.photoURL} className="w-10 h-10 rounded-xl object-cover" alt="" />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-xl bg-aeirmist-magenta/10 flex items-center justify-center text-lg">
-                                    {emoji}
-                                  </div>
-                                )}
+                                <img src={getAvatarUrl(p?.photoURL)} className="w-10 h-10 rounded-xl object-cover" alt="" />
                                 <div className="flex flex-col">
                                   <span className="text-sm font-bold text-white/80">{p?.username || p?.displayName || `User_${vId.substring(0, 6)}`}</span>
                                   <span className="text-[9px] text-white/30 uppercase tracking-widest font-black">Interacted via {emoji}</span>

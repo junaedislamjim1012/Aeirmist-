@@ -28,6 +28,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { Notification } from '../../types/notifications';
+import { getAvatarUrl as getAvatarUrlHelper } from '../../lib/avatar';
 
 interface NotificationItemProps {
   notification: any; // Using any for broader compatibility
@@ -201,10 +202,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
   // Extract avatar URL
   const getAvatarUrl = () => {
-    if (notification.user?.avatar) return notification.user.avatar;
-    if (notification.user?.photoURL) return notification.user.photoURL;
-    const seed = notification.user?.name || notification.user?.username || 'Aeirmist';
-    return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(seed)}`;
+    return getAvatarUrlHelper(notification.user?.avatar || notification.user?.photoURL, notification.user?.name || notification.user?.username);
   };
 
   const getUsername = () => {
@@ -228,7 +226,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         id: notification.fromUserId || notification.user?.id || notification.user?.uid,
         uid: notification.fromUserId || notification.user?.uid || notification.user?.id,
         displayName: notification.user?.name || notification.user?.displayName || 'Aeirmist Citizen',
-        photoURL: notification.user?.avatar || notification.user?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${notification.id}`,
+        photoURL: getAvatarUrlHelper(notification.user?.avatar || notification.user?.photoURL, notification.id),
         username: notification.user?.username || 'aeirmist_network'
       };
       onUserClick(targetUser);

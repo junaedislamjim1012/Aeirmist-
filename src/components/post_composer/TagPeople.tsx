@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, Search, X, UserCheck } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { logger } from '@/src/utils/logger';
 
 
@@ -83,7 +84,7 @@ export const TagPeople: React.FC<TagPeopleProps> = ({ taggedUsers, onChange }) =
                 className="w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/5 text-left transition-all"
               >
                 <img
-                  src={user.photoURL || 'https://picsum.photos/seed/default/100'}
+                  src={getAvatarUrl(user.photoURL)}
                   className="w-5 h-5 rounded-full object-cover border border-white/10"
                   alt=""
                 />

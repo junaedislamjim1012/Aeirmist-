@@ -7,6 +7,7 @@ import {
   Maximize2, Hand, LayoutGrid, MoreHorizontal, Smile, Monitor
 } from 'lucide-react';
 import { useAeirmist } from '../context/AeirmistContext';
+import { getAvatarUrl } from '../lib/avatar';
 import { aeirmistRingtone } from '../modules/calls/RingtoneService';
 import { aeirmistCall } from '../modules/calls/CallService';
 import { LiveParticipantName } from './Messenger';
@@ -70,7 +71,7 @@ export const CallModal: React.FC<CallModalProps> = ({ chat, type, onClose, isInc
   const safeChat = chat || {
     id: activeCall?.conversationId || '',
     name: activeCall?.callerName || (activeCall as any)?.participantDetails?.[activeCall?.callerId || '']?.displayName || 'Aeirmist User',
-    photo: activeCall?.callerPhoto || (activeCall as any)?.participantDetails?.[activeCall?.callerId || '']?.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
+    photo: getAvatarUrl(activeCall?.callerPhoto || (activeCall as any)?.participantDetails?.[activeCall?.callerId || '']?.photoURL, activeCall?.callerId),
     participants: activeCall?.callerId ? [activeCall.callerId, profile?.id].filter(Boolean) : [],
     otherParticipantUid: activeCall?.callerUid || ''
   };
@@ -347,7 +348,7 @@ export const CallModal: React.FC<CallModalProps> = ({ chat, type, onClose, isInc
               return (
                 <div key={conn.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
                   <div className="flex items-center gap-3">
-                    <img src={conn.photoURL || conn.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'} className="w-9 h-9 rounded-full object-cover border border-white/10" referrerPolicy="no-referrer" />
+                    <img src={getAvatarUrl(conn.photoURL || conn.avatar, conn.id)} className="w-9 h-9 rounded-full object-cover border border-white/10" referrerPolicy="no-referrer" />
                     <div>
                       <div className="text-xs font-bold text-white">{conn.displayName || 'Aeirmist Member'}</div>
                       <div className="text-[10px] text-emerald-400 font-mono">Online</div>
@@ -1164,27 +1165,27 @@ export const CallModal: React.FC<CallModalProps> = ({ chat, type, onClose, isInc
       {
         id: 'local_user',
         name: profile?.displayName || 'Mary Jane',
-        photo: profile?.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=local',
+        photo: getAvatarUrl(profile?.photoURL, profile?.id),
         isLocal: true,
       },
       ...(invitedList.length > 0 
         ? invitedList.map((usr: any, idx: number) => ({
             id: usr.id || `inv_${idx}`,
             name: usr.displayName || 'Participant',
-            photo: usr.photoURL || usr.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + idx,
+            photo: getAvatarUrl(usr.photoURL || usr.avatar, usr.id),
             isLocal: false,
           }))
         : [
             {
               id: 'p_3',
               name: 'Paul David',
-              photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop',
+              photo: getAvatarUrl(null, 'p_3'),
               isLocal: false,
             },
             {
               id: 'p_4',
               name: 'Muhammed',
-              photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
+              photo: getAvatarUrl(null, 'p_4'),
               isLocal: false,
             }
           ]
@@ -1245,7 +1246,7 @@ export const CallModal: React.FC<CallModalProps> = ({ chat, type, onClose, isInc
                 {isVideoMode ? (
                   <video className="aeirmist-local-video w-full h-full object-cover scale-x-[-1]" autoPlay playsInline muted style={{ filter: getLocalFilterCss() }} />
                 ) : (
-                  <img src={profile?.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'} className="w-28 h-28 rounded-2xl object-cover border-2 border-white/15 shadow-2xl" referrerPolicy="no-referrer" />
+                  <img src={getAvatarUrl(profile?.photoURL, profile?.id)} className="w-28 h-28 rounded-2xl object-cover border-2 border-white/15 shadow-2xl" referrerPolicy="no-referrer" />
                 )}
                 {/* Participant Name Tag at Bottom Left */}
                 <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-2 text-xs font-bold text-white shadow-md">

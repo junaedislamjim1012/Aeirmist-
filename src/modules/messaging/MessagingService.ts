@@ -24,6 +24,7 @@ import { Message, Chat } from '../../types/messenger';
 import { aeirmistCache } from '../../services/CacheService';
 import { handleFirestoreError, OperationType } from '../../lib/firebase';
 import { logger } from '@/src/utils/logger';
+import { getAvatarUrl } from '../../lib/avatar';
 
 
 class MessagingService {
@@ -249,7 +250,7 @@ class MessagingService {
             },
             [targetProfileId!]: metadata.targetProfile || { 
               displayName: 'Aeirmist User', 
-              photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${targetProfileId}`, 
+              photoURL: getAvatarUrl(null, targetProfileId), 
               username: targetProfileId, 
               uid: targetOwnerUid || targetProfileId
             }

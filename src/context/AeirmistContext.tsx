@@ -67,6 +67,7 @@ import {
   OperationType
 } from '../lib/firebase';
 import { usePermissions } from '../hooks/usePermissions';
+import { BLANK_DP, getAvatarUrl } from '../lib/avatar';
 import { aeirmistCache } from '../services/CacheService';
 export { MediaQuality };
 import { mediaService, MediaQuality } from '../services/MediaService';
@@ -106,7 +107,16 @@ export const DEFAULT_FEATURE_FLAGS: Record<string, boolean> = {
   notifications: true
 };
 
+export interface AppBranding {
+  darkLogoUrl?: string;
+  lightLogoUrl?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
 interface AeirmistContextType {
+  appBranding: AppBranding;
+  updateAppBranding: (branding: Partial<AppBranding>) => Promise<void>;
   featureFlags: Record<string, boolean>;
   updateFeatureFlag: (key: string, enabled: boolean) => Promise<void>;
   user: any;
@@ -373,6 +383,54 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await setDoc(flagsRef, { [key]: enabled }, { merge: true });
     } catch (err) {
       logger.error("Failed to update feature flag in Firestore:", err);
+    }
+  }, []);
+
+  const [appBranding, setAppBranding] = useState<AppBranding>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('aeirmist_app_branding');
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    if (!_db) return;
+    const brandingRef = doc(_db, 'system_config', 'app_branding');
+    const unsub = onSnapshot(brandingRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as AppBranding;
+        setAppBranding(prev => ({ ...prev, ...data }));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('aeirmist_app_branding', JSON.stringify(data));
+        }
+      }
+    }, (err) => {
+      logger.warn("App branding snapshot listener warning:", err);
+    });
+    return () => unsub();
+  }, []);
+
+  const updateAppBranding = useCallback(async (newBranding: Partial<AppBranding>) => {
+    setAppBranding(prev => {
+      const updated = { ...prev, ...newBranding, updatedAt: new Date().toISOString() };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('aeirmist_app_branding', JSON.stringify(updated));
+      }
+      return updated;
+    });
+    if (_db) {
+      try {
+        const brandingRef = doc(_db, 'system_config', 'app_branding');
+        await setDoc(brandingRef, {
+          ...newBranding,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (err) {
+        logger.error("Failed to update app branding in Firestore:", err);
+      }
     }
   }, []);
 
@@ -2087,7 +2145,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             needsUsername: !isMainAdmin,
             email: u.email || "",
             displayName: isMainAdmin ? "Junaed Islam Jim" : (u.displayName || 'Aeirmist User'),
-            photoURL: u.photoURL || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=256",
+            photoURL: u.photoURL || BLANK_DP,
             bio: isMainAdmin ? "Founder & Lead Architect at Aeirmist" : "Aeirmist Account Active",
             tagline: "",
             followersCount: 0,
@@ -2390,7 +2448,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               if (typeof window !== 'undefined' && 'Notification' in window) {
                 const title = data.fromUser?.displayName ? `@${data.fromUser.displayName}` : 'New Aeirmist Message';
                 const iconSeed = data.fromUser?.displayName || 'Aeirmist';
-                const avatar = data.fromUser?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(iconSeed)}`;
+                const avatar = getAvatarUrl(data.fromUser?.photoURL, iconSeed);
                 
                 if (Notification.permission === 'granted') {
                   try {
@@ -3162,7 +3220,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           usernameNormalized: isMainAdmin ? 'junaed_islam_jim9' : (resolvedUserData?.username || input.replace('@', '')).toLowerCase(),
           displayName: isMainAdmin ? 'Junaed Islam Jim' : (resolvedUserData?.displayName || resolvedUserData?.username || input),
           email: targetEmail,
-          photoURL: resolvedUserData?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=256',
+          photoURL: resolvedUserData?.photoURL || BLANK_DP,
           bio: isMainAdmin ? 'Founder & Lead Architect at Aeirmist' : 'Aeirmist Account Active',
           role: isMainAdmin ? 'admin' : 'member',
           isAdmin: isMainAdmin,
@@ -3278,7 +3336,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         username: `guest_${sessionGuestId}`,
         email: guestEmail,
         displayName: `Guest Account ${sessionGuestId}`,
-        photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${sessionGuestId}`,
+        photoURL: BLANK_DP,
         createdAt: serverTimestamp(),
         provider: 'email'
       }, { merge: true });
@@ -3290,7 +3348,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         ownerUid: newUser.uid,
         username: `guest_${sessionGuestId}`,
         displayName: `Guest Account ${sessionGuestId}`,
-        photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${sessionGuestId}`,
+        photoURL: BLANK_DP,
         bio: "Ephemeral Guest Account initialized.",
         tagline: "Temporary State",
         followersCount: 0,
@@ -3319,7 +3377,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         uid: mockUid,
         email: "sandbox@aeirmist.local",
         displayName: "Sandbox Account",
-        photoURL: "https://api.dicebear.com/7.x/avataaars/svg?seed=sandbox",
+        photoURL: BLANK_DP,
         providerData: [{ providerId: 'local' }]
       };
       
@@ -3329,7 +3387,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         ownerUid: mockUid,
         username: "sandbox_account",
         displayName: "Sandbox Guest",
-        photoURL: "https://api.dicebear.com/7.x/avataaars/svg?seed=sandbox",
+        photoURL: BLANK_DP,
         bio: "Local Sandbox Account. Exploring Aeirmist safely without backend restrictions.",
         tagline: "Local Sandbox Mode Active",
         followersCount: 0,
@@ -4406,7 +4464,7 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         usernameNormalized: norm,
         email: activeUser?.email || data.email || data.personalEmail || '',
         displayName: data.displayName || activeUser?.displayName || cleanRawUsername,
-        photoURL: data.photoURL || activeUser?.photoURL || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=256",
+        photoURL: data.photoURL || activeUser?.photoURL || BLANK_DP,
         bio: data.bio || "Account created (Local Sandbox).",
         tagline: data.tagline || "Sandbox active",
         followersCount: 0,
@@ -5466,11 +5524,13 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     needsPasswordOnboarding,
     setNeedsPasswordOnboarding,
     featureFlags,
-    updateFeatureFlag
+    updateFeatureFlag,
+    appBranding,
+    updateAppBranding
     };
   }, [
     user, account, profile, allProfiles, activeProfileId, loading, db, auth, storage, lastAuthError,
-    featureFlags, updateFeatureFlag,
+    featureFlags, updateFeatureFlag, appBranding, updateAppBranding,
     login, loginWithProvider, linkAccountMethod, unlinkAccountMethod, requestDeleteAccount, cancelDeleteAccount, logActivity, pendingLinkEmail, pendingLinkCredential, isScheduledForPurge, loginWithEmail, loginAsGuestSandbox, signupWithEmail, completeSignup, resetPassword, logout,
     refreshProfile, reloadAuthUser,
     updateProfile, deleteAccount, purgeUser, toggleUserBan, toggleVerification, checkUsernameAvailable, registerUsername, switchProfile, toggleFollow,

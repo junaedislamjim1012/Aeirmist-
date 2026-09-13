@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart, MessageCircle, Repeat2, MoreHorizontal, Share2, Sparkles, Eye, BarChart3, ShieldCheck } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { useReport } from '../reporting/ReportContext';
 import { usePostAnalytics } from '../../hooks/usePostAnalytics';
 import { postAnalytics } from '../../services/PostAnalyticsService';
@@ -180,7 +181,7 @@ export const QuartCard: React.FC<QuartCardProps> = ({ post, onUserClick, onComme
             onClick={handleAuthorClick}
           >
             <img 
-              src={post.authorPhoto || post.author?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.authorName || post.authorId || 'aura'}`} 
+              src={getAvatarUrl(post.authorPhoto || post.author?.photoURL, post.authorName || post.authorId)} 
               alt={post.authorName} 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"

@@ -8,6 +8,7 @@ import { useAeirmist } from '../context/AeirmistContext';
 import { useReport } from './reporting/ReportContext';
 import { REWARDS } from '../lib/aeirmistRanks';
 import { usePostAnalytics } from '../hooks/usePostAnalytics';
+import { getAvatarUrl, BLANK_DP } from '../lib/avatar';
 import { InsightsDashboard } from './analytics/InsightsDashboard';
 import { postAnalytics } from '../services/PostAnalyticsService';
 import { logger } from '@/src/utils/logger';
@@ -114,12 +115,12 @@ export const PostCard: React.FC<PostProps> = React.memo(({ post, onUserClick }) 
               onClick={handleAuthorClick}
             >
               <img 
-                src={authorPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.authorName}`} 
+                src={getAvatarUrl(authorPhoto, post.authorName)} 
                 alt={post.authorName} 
                 className="w-full h-full object-cover bg-neutral-900" 
                 referrerPolicy="no-referrer" 
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.authorName}`;
+                  (e.target as HTMLImageElement).src = BLANK_DP;
                 }}
               />
             </div>

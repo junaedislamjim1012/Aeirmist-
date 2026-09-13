@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Navigation, Tab } from './components/Navigation';
 import { CreatePost } from './components/CreatePost';
 import { AeirmistProvider, useAeirmist } from './context/AeirmistContext';
+import { getAvatarUrl } from './lib/avatar';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AppearanceProvider, useAppearance } from './context/AppearanceContext';
 import { DynamicAesthetic } from './components/ui/DynamicAesthetic';
@@ -257,19 +258,15 @@ function AppContent() {
   const [lastMainTab, setLastMainTab] = useState<Tab>('feed');
   const [showSafeExit, setShowSafeExit] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [showSplash, setShowSplash] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    if (user && loading) {
-      setShowSplash(true);
-      const timer = setTimeout(() => {
-        setShowSplash(false);
-      }, 4200);
-      return () => clearTimeout(timer);
-    } else {
+    setShowSplash(true);
+    const timer = setTimeout(() => {
       setShowSplash(false);
-    }
-  }, [user?.uid, loading]);
+    }, 4800);
+    return () => clearTimeout(timer);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (loading || (user && !profile && !needsUsername)) {
@@ -306,7 +303,7 @@ function AppContent() {
   const callChatInfo = activeCall ? {
     id: activeCall.conversationId,
     name: activeCall.callerName || 'Incoming Link',
-    photo: activeCall.callerPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeCall.callerId}`,
+    photo: getAvatarUrl(activeCall.callerPhoto, activeCall.callerId),
     participants: [activeCall.callerId, profile?.id].filter(Boolean),
     otherParticipantUid: activeCall.callerUid,
   } : null;
@@ -731,145 +728,109 @@ function AppContent() {
     );
   }
 
-  // Show premium loader for BOTH initial load and post-login profile sync
-  if (loading || (user && showSplash && !needsUsername)) {
-    const isSuccessRedirect = !!user && !needsUsername;
-    
+  // Show unified Welcome screen on opening / initial load
+  if (loading || (showSplash && !needsUsername)) {
+    const displayNameText = user 
+      ? (profile?.displayName || user.displayName || user.email?.split('@')[0] || 'User')
+      : 'AEIRMIST';
+
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center z-[100] overflow-hidden select-none">
-        <div className="relative flex flex-col items-center max-w-xl px-6">
-          <AnimatePresence mode="wait">
-            {isSuccessRedirect ? (
-              <motion.div 
-                key="success"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center space-y-7 text-center"
+        <div className="relative flex flex-col items-center max-w-xl px-6 text-center space-y-6">
+          
+          {/* App Logo - Large clean display without extra outer ring */}
+          <motion.div 
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="relative flex items-center justify-center my-3"
+          >
+            <div className="w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center">
+              <AeirmistLogo className="w-full h-full object-contain drop-shadow-[0_0_25px_rgba(0,242,255,0.4)]" variant="compact" />
+            </div>
+          </motion.div>
+
+          {/* Welcome Title + Clean Glitch-Free Name Display */}
+          <div className="flex flex-col items-center justify-center gap-y-2 px-2">
+            <motion.span
+              initial={{ opacity: 0, y: 10, filter: 'blur(8px)' }}
+              animate={{ opacity: 0.6, y: 0, filter: 'blur(0px)' }}
+              transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+              className="text-xs sm:text-sm font-black tracking-[0.4em] text-zinc-400 uppercase"
+            >
+              {user ? 'WELCOME' : 'WELCOME TO'}
+            </motion.span>
+
+            <motion.h1
+              key={displayNameText}
+              initial={{ opacity: 0, y: 12, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="text-2xl sm:text-4xl md:text-5xl font-serif italic font-medium tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-300 drop-shadow-[0_0_25px_rgba(0,242,255,0.5)] max-w-[95vw] px-2 py-1 leading-normal"
+            >
+              {displayNameText}
+            </motion.h1>
+          </div>
+
+          {/* Neon Cyan Divider Line */}
+          <motion.div
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ delay: 1.1, duration: 0.7, ease: "easeInOut" }}
+            className="h-[1.5px] w-44 bg-gradient-to-r from-transparent via-aeirmist-cyan to-transparent shadow-[0_0_14px_rgba(0,242,255,0.7)]"
+          />
+
+          {/* Progress Bar & Status Text */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.3, duration: 0.5 }}
+            className="flex flex-col items-center gap-2.5"
+          >
+            <p className="text-[9px] font-mono tracking-[0.35em] text-zinc-400 uppercase flex items-center gap-2">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-aeirmist-cyan animate-ping" />
+              <span className="text-zinc-400">
+                {deviceLinkingStatus.loading ? 'Linking device...' : (user ? 'Preparing your feed...' : 'Initializing interface...')}
+              </span>
+            </p>
+
+            <div className="w-40 h-1 rounded-full bg-zinc-900 border border-zinc-800/80 overflow-hidden relative shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+              <motion.div
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ delay: 1.4, duration: 2.2, ease: "easeInOut" }}
+                className="h-full bg-gradient-to-r from-zinc-600 via-aeirmist-cyan to-white shadow-[0_0_12px_rgba(0,242,255,0.9)] rounded-full"
+              />
+            </div>
+          </motion.div>
+
+          {/* Safe Exit controls if network is sluggish */}
+          {showSafeExit && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              className="pt-2 flex flex-col gap-2.5 w-full max-w-xs"
+            >
+              <div className="flex items-center gap-2 text-aeirmist-magenta/60 justify-center">
+                <AlertCircle size={13} />
+                <span className="text-[8px] font-bold uppercase tracking-widest">Connection Sluggish</span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => window.location.reload()}
+                className="w-full py-3 rounded-[18px] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.20em] text-[9px] hover:bg-white/10 transition-all cursor-pointer"
               >
-                {/* 0.5s - 2.4s: Welcome + Letter-by-Letter Script Name Reveal */}
-                <div className="flex flex-col items-center justify-center gap-y-3 px-4">
-                  <motion.span
-                    initial={{ opacity: 0, y: 12, filter: 'blur(10px)' }}
-                    animate={{ opacity: 0.5, y: 0, filter: 'blur(0px)' }}
-                    transition={{ delay: 0.5, duration: 0.7, ease: "easeOut" }}
-                    className="text-xs sm:text-sm font-black tracking-[0.4em] text-zinc-500 uppercase"
-                  >
-                    WELCOME
-                  </motion.span>
-                  <span className="text-[32px] sm:text-6xl font-normal tracking-tight text-white flex flex-nowrap whitespace-nowrap justify-center gap-[1px] sm:gap-1 max-w-[95vw]">
-                    {Array.from(toMathBoldScript(user.displayName || user.email?.split('@')[0] || 'User')).map((char, i) => (
-                      <motion.span
-                        key={i}
-                        initial={{ opacity: 0, y: 22, filter: 'blur(12px)', scale: 0.88 }}
-                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
-                        transition={{
-                          delay: 0.85 + i * 0.05,
-                          duration: 0.55,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
-                        className="inline-block text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-300 drop-shadow-[0_0_22px_rgba(0,242,255,0.45)]"
-                      >
-                        {char === ' ' ? '\u00A0' : char}
-                      </motion.span>
-                    ))}
-                  </span>
-                </div>
-
-                {/* 2.3s - 3.0s: Neon Cyan & Ash Divider Line */}
-                <motion.div
-                  initial={{ scaleX: 0, opacity: 0 }}
-                  animate={{ scaleX: 1, opacity: 1 }}
-                  transition={{ delay: 2.2, duration: 0.8, ease: "easeInOut" }}
-                  className="h-[1.5px] w-48 bg-gradient-to-r from-transparent via-aeirmist-cyan to-transparent shadow-[0_0_14px_rgba(0,242,255,0.7)]"
-                />
-
-                {/* 2.8s - 4.0s: Dynamic Loader Progress Bar */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 2.7, duration: 0.6 }}
-                  className="flex flex-col items-center gap-2.5"
-                >
-                  <p className="text-[9px] font-mono tracking-[0.35em] text-zinc-400 uppercase flex items-center gap-2">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-aeirmist-cyan animate-ping" />
-                    <span className="text-zinc-400">Loading your feed...</span>
-                  </p>
-
-                  <div className="w-36 h-1 rounded-full bg-zinc-900 border border-zinc-800/80 overflow-hidden relative shadow-[0_0_10px_rgba(0,0,0,0.8)]">
-                    <motion.div
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{ delay: 2.8, duration: 1.2, ease: "easeInOut" }}
-                      className="h-full bg-gradient-to-r from-zinc-600 via-aeirmist-cyan to-white shadow-[0_0_12px_rgba(0,242,255,0.9)] rounded-full"
-                    />
-                  </div>
-                </motion.div>
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="loader"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex flex-col items-center text-center space-y-6"
+                Reload Interface
+              </button>
+              <button 
+                type="button"
+                onClick={() => logout()}
+                className="w-full py-2.5 rounded-[18px] bg-white/5 border border-white/10 text-white/40 font-black uppercase tracking-[0.20em] text-[9px] hover:text-white transition-all underline decoration-white/10 cursor-pointer"
               >
-                <div className="relative mb-6">
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    className="w-24 h-24 rounded-full border border-aeirmist-cyan/20 border-t-aeirmist-cyan shadow-[0_0_35px_rgba(0,242,255,0.15)]"
-                  />
-                  <motion.div 
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 w-24 h-24 rounded-full border border-aeirmist-magenta/20 border-b-aeirmist-magenta opacity-50"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="hidden sm:block">
-                      <AeirmistLogo className="w-24 h-24 animate-pulse drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" variant="compact" />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <h2 className="text-sm font-black uppercase tracking-[0.45em] text-white">
-                    {deviceLinkingStatus.loading ? 'Handshaking...' : 'Connecting...'}
-                  </h2>
-                  <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/20">
-                    {deviceLinkingStatus.loading ? 'Linking device...' : 'Initializing This Device v4.8'}
-                  </p>
-                </div>
-
-                {showSafeExit && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }} 
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="pt-4 flex flex-col gap-3 w-full"
-                  >
-                    <div className="flex items-center gap-2 text-aeirmist-magenta/60 justify-center">
-                      <AlertCircle size={13} />
-                      <span className="text-[8px] font-bold uppercase tracking-widest">Network Sluggish</span>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => window.location.reload()}
-                      className="w-full py-3.5 rounded-[18px] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.20em] text-[9px] hover:bg-white/10 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aeirmist-cyan"
-                    >
-                      Reload Interface
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => logout()}
-                      className="w-full py-3.5 rounded-[18px] bg-white/5 border border-white/10 text-white/40 font-black uppercase tracking-[0.20em] text-[9px] hover:text-white transition-all underline decoration-white/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aeirmist-magenta"
-                    >
-                      Try Different Account
-                    </button>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                Try Different Account
+              </button>
+            </motion.div>
+          )}
         </div>
 
         {/* HUD Data Streams */}

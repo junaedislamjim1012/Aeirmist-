@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Send, Sparkles, Smile, MessageSquare, Zap } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export const QuartComposer = () => {
@@ -53,7 +54,7 @@ export const QuartComposer = () => {
       <div className="flex gap-4">
         <div className="flex-shrink-0">
           <img 
-            src={localAvatarURL || profile.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.displayName}`} 
+            src={getAvatarUrl(localAvatarURL || profile.photoURL, profile.displayName)} 
             alt="Me" 
             className="w-12 h-12 rounded-2xl object-cover border border-white/10"
             referrerPolicy="no-referrer"

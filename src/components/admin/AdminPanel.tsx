@@ -2,6 +2,7 @@ import TicketsTab from './TicketsTab';
 import SupportInboxTab from './SupportInboxTab';
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/src/utils/logger';
+import { getAvatarUrl } from '../../lib/avatar';
 
 import {
  motion, AnimatePresence } from 'motion/react';
@@ -54,7 +55,13 @@ import {
   Edit3,
   ShieldAlert,
   LogOut,
-  LifeBuoy
+  LifeBuoy,
+  Upload,
+  Image,
+  Sun,
+  Moon,
+  Sparkles,
+  Save
 } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
 import { getCanonicalUid, getProfileId, normalizeAdminUser } from '@/src/utils/identityUtils';
@@ -172,6 +179,298 @@ const AuditLogTab = ({ db }: { db: any }) => {
             <p className="text-xs font-black uppercase tracking-widest">No matching audit logs</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+const SystemTab = () => {
+  const { appBranding, updateAppBranding, uploadMedia, addToast } = useAeirmist();
+  const [darkLogo, setDarkLogo] = useState<string>(appBranding?.darkLogoUrl || '');
+  const [lightLogo, setLightLogo] = useState<string>(appBranding?.lightLogoUrl || '');
+  const [uploadingDark, setUploadingDark] = useState(false);
+  const [uploadingLight, setUploadingLight] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (appBranding?.darkLogoUrl !== undefined) setDarkLogo(appBranding.darkLogoUrl);
+    if (appBranding?.lightLogoUrl !== undefined) setLightLogo(appBranding.lightLogoUrl);
+  }, [appBranding]);
+
+  const compressImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 800;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/png', 0.95));
+          } else {
+            resolve(event.target?.result as string);
+          }
+        };
+        img.onerror = () => resolve(event.target?.result as string);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, mode: 'dark' | 'light') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      addToast({ title: 'Invalid File', message: 'Please select an image file (PNG, JPG, SVG, WebP)', type: 'warning' });
+      return;
+    }
+
+    if (mode === 'dark') setUploadingDark(true);
+    else setUploadingLight(true);
+
+    try {
+      const dataUrl = await compressImageFile(file);
+
+      if (mode === 'dark') {
+        setDarkLogo(dataUrl);
+        await updateAppBranding({ darkLogoUrl: dataUrl });
+        addToast({ title: 'Dark Logo Uploaded', message: 'Dark theme logo saved & applied as main logo.', type: 'success' });
+      } else {
+        setLightLogo(dataUrl);
+        await updateAppBranding({ lightLogoUrl: dataUrl });
+        addToast({ title: 'Light Logo Uploaded', message: 'Light theme logo saved & applied as main logo.', type: 'success' });
+      }
+
+      if (uploadMedia) {
+        uploadMedia(file, 'system/logos').then(async (storageUrl) => {
+          if (storageUrl) {
+            if (mode === 'dark') {
+              setDarkLogo(storageUrl);
+              await updateAppBranding({ darkLogoUrl: storageUrl });
+            } else {
+              setLightLogo(storageUrl);
+              await updateAppBranding({ lightLogoUrl: storageUrl });
+            }
+          }
+        }).catch(err => logger.warn('Background storage upload note:', err));
+      }
+    } catch (err: any) {
+      logger.error('Failed to process logo image:', err);
+      addToast({ title: 'Upload Failed', message: err?.message || 'Could not process logo. Please retry.', type: 'warning' });
+    } finally {
+      if (mode === 'dark') setUploadingDark(false);
+      else setUploadingLight(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    try {
+      await updateAppBranding({
+        darkLogoUrl: darkLogo,
+        lightLogoUrl: lightLogo
+      });
+      addToast({ title: 'Logos Saved to Database', message: 'Custom app logos are permanently saved in Firestore.', type: 'success' });
+    } catch (err: any) {
+      addToast({ title: 'Save Failed', message: 'Could not save branding to database.', type: 'warning' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReset = async (mode: 'dark' | 'light') => {
+    if (mode === 'dark') {
+      setDarkLogo('');
+      await updateAppBranding({ darkLogoUrl: '' });
+      addToast({ title: 'Dark Logo Reset', message: 'Restored default vector symbol for Dark theme.', type: 'info' });
+    } else {
+      setLightLogo('');
+      await updateAppBranding({ lightLogoUrl: '' });
+      addToast({ title: 'Light Logo Reset', message: 'Restored default vector symbol for Light theme.', type: 'info' });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-base font-black uppercase tracking-widest text-white flex items-center gap-2">
+            <Cpu className="text-aeirmist-cyan" size={18} />
+            System Management
+          </h2>
+          <p className="text-[10px] font-mono text-white/40">
+            System control center and core operational workspace.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-aeirmist-cyan/10 border border-aeirmist-cyan/20 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-aeirmist-cyan animate-pulse" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-aeirmist-cyan">System Workspace Active</span>
+        </div>
+      </div>
+
+      {/* App Logo Management Section */}
+      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 bg-black/40 shadow-2xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-aeirmist-cyan/10 border border-aeirmist-cyan/30 flex items-center justify-center text-aeirmist-cyan">
+              <Image size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2">
+                App Logo
+                <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase bg-aeirmist-cyan/20 text-aeirmist-cyan border border-aeirmist-cyan/30">
+                  Firestore Permanent
+                </span>
+              </h3>
+              <p className="text-xs text-white/50">
+                Upload custom dark & light theme logos. Automatically used across all app components without changing front-end design or layout.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSaveAll}
+            disabled={isSaving}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-aeirmist-cyan text-black font-bold text-xs uppercase tracking-wider hover:bg-aeirmist-cyan/90 transition-all shadow-lg shadow-aeirmist-cyan/20 disabled:opacity-50 shrink-0 cursor-pointer"
+          >
+            {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+            <span>Save to Database</span>
+          </button>
+        </div>
+
+        {/* Upload Grid for Dark & Light Mode Logos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Dark Theme Logo Box */}
+          <div className="p-5 rounded-2xl bg-[#090d16] border border-white/10 space-y-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-white tracking-wider">
+                <Moon size={14} className="text-aeirmist-cyan" />
+                <span>Dark Theme Logo</span>
+              </div>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${darkLogo ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/40'}`}>
+                {darkLogo ? 'Custom Logo Active' : 'Default Symbol'}
+              </span>
+            </div>
+
+            {/* Logo Preview */}
+            <div className="h-32 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center p-4 relative overflow-hidden group">
+              {darkLogo ? (
+                <img src={darkLogo} alt="Dark Logo" className="max-h-24 max-w-full object-contain drop-shadow-[0_0_15px_rgba(0,242,255,0.3)]" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-white/30 text-xs font-mono">
+                  <Sparkles size={24} className="text-aeirmist-cyan/60" />
+                  <span>No dark logo uploaded</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 pt-2">
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border border-white/10">
+                {uploadingDark ? <RefreshCw size={14} className="animate-spin text-aeirmist-cyan" /> : <Upload size={14} />}
+                <span>{uploadingDark ? 'Uploading...' : 'Upload Dark Logo'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingDark}
+                  onChange={(e) => handleFileUpload(e, 'dark')}
+                  className="hidden"
+                />
+              </label>
+
+              {darkLogo && (
+                <button
+                  onClick={() => handleReset('dark')}
+                  className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all cursor-pointer"
+                  title="Reset to default logo"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Light Theme Logo Box */}
+          <div className="p-5 rounded-2xl bg-[#f8fafc] border border-slate-200 space-y-4 flex flex-col justify-between text-slate-900">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-slate-900 tracking-wider">
+                <Sun size={14} className="text-amber-500" />
+                <span>Light Theme Logo</span>
+              </div>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${lightLogo ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30' : 'bg-slate-200 text-slate-600'}`}>
+                {lightLogo ? 'Custom Logo Active' : 'Default Symbol'}
+              </span>
+            </div>
+
+            {/* Logo Preview */}
+            <div className="h-32 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-4 relative overflow-hidden shadow-inner">
+              {lightLogo ? (
+                <img src={lightLogo} alt="Light Logo" className="max-h-24 max-w-full object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-slate-400 text-xs font-mono">
+                  <Sun size={24} className="text-amber-500/60" />
+                  <span>No light logo uploaded</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 pt-2">
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider cursor-pointer transition-all">
+                {uploadingLight ? <RefreshCw size={14} className="animate-spin text-amber-400" /> : <Upload size={14} />}
+                <span>{uploadingLight ? 'Uploading...' : 'Upload Light Logo'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingLight}
+                  onChange={(e) => handleFileUpload(e, 'light')}
+                  className="hidden"
+                />
+              </label>
+
+              {lightLogo && (
+                <button
+                  onClick={() => handleReset('light')}
+                  className="p-2.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-600 border border-red-200 transition-all cursor-pointer"
+                  title="Reset to default logo"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Persistence Status Info */}
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-white/50 font-mono">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={14} className="text-emerald-400 shrink-0" />
+            <span>Database Storage: <strong className="text-white">Firestore system_config/app_branding</strong></span>
+          </div>
+          <div className="text-[10px] text-white/30">
+            {appBranding?.updatedAt ? `Last Synced: ${new Date(appBranding.updatedAt).toLocaleString()}` : 'Ready for logo configuration'}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -477,7 +776,7 @@ const UsersTab = ({ db, addToast, purgeUser, toggleUserBan, toggleVerification, 
                   }}
                   className="w-4 h-4 rounded accent-aeirmist-cyan cursor-pointer"
                 />
-                <img src={u.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`} alt="" className="w-12 h-12 rounded-2xl object-cover" />
+                <img src={getAvatarUrl(u.photoURL, u.id)} alt="" className="w-12 h-12 rounded-2xl object-cover" />
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span 
@@ -613,7 +912,7 @@ const UsersTab = ({ db, addToast, purgeUser, toggleUserBan, toggleVerification, 
             >
               <div className="flex items-center justify-between pb-6 border-b border-white/10">
                 <div className="flex items-center gap-3">
-                  <img src={selectedUserForDrawer.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedUserForDrawer.id}`} alt="" className="w-14 h-14 rounded-2xl object-cover" />
+                  <img src={getAvatarUrl(selectedUserForDrawer.photoURL, selectedUserForDrawer.id)} alt="" className="w-14 h-14 rounded-2xl object-cover" />
                   <div>
                     <h3 className="text-base font-bold text-white">{selectedUserForDrawer.displayName || selectedUserForDrawer.username}</h3>
                     <p className="text-[10px] font-mono text-aeirmist-cyan">@{selectedUserForDrawer.username || 'no_handle'} • UID: {selectedUserForDrawer.uid || 'UNKNOWN'}</p>
@@ -1272,7 +1571,7 @@ export const AddAdminModal = ({ isOpen, onClose, db, addToast, allUsers }: { isO
                   className="p-2.5 rounded-xl hover:bg-white/10 cursor-pointer flex items-center justify-between transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <img src={u.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`} className="w-7 h-7 rounded-lg object-cover" />
+                    <img src={getAvatarUrl(u.photoURL, u.id)} className="w-7 h-7 rounded-lg object-cover" />
                     <div>
                       <span className="text-xs font-bold text-white block">{u.displayName || u.username}</span>
                       <span className="text-[9px] font-mono text-white/40">@{u.username} • {u.email || 'No Email'}</span>
@@ -1287,7 +1586,7 @@ export const AddAdminModal = ({ isOpen, onClose, db, addToast, allUsers }: { isO
           {selectedUser && (
             <div className="p-3 rounded-xl bg-aeirmist-cyan/10 border border-aeirmist-cyan/30 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src={selectedUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedUser.id}`} className="w-8 h-8 rounded-lg object-cover" />
+                <img src={getAvatarUrl(selectedUser.photoURL, selectedUser.id)} className="w-8 h-8 rounded-lg object-cover" />
                 <div>
                   <span className="text-xs font-bold text-white">{selectedUser.displayName || selectedUser.username}</span>
                   <p className="text-[9px] font-mono text-aeirmist-cyan">Current Role: {selectedUser.role || 'USER'}</p>
@@ -1468,7 +1767,7 @@ const RolesPermissionsTab = ({ db, addToast, onOpenAddAdmin }: { db: any; addToa
           {adminUsers.map((u) => (
             <div key={u.id} className="glass-panel p-4 rounded-2xl border-white/5 bg-white/[0.01] flex items-center justify-between gap-4 flex-wrap md:flex-nowrap">
               <div className="flex items-center gap-3">
-                <img src={u.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`} className="w-10 h-10 rounded-xl object-cover" />
+                <img src={getAvatarUrl(u.photoURL, u.id)} className="w-10 h-10 rounded-xl object-cover" />
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-white">{u.displayName || u.username}</span>
@@ -1797,7 +2096,7 @@ const VerificationRequestsTab = ({ db, addToast }: { db: any; addToast: any }) =
 export const AdminPanel = () => {
   const { user, profile, db, addToast, purgeUser, toggleUserBan, toggleVerification, updateUserStatus, suspendUser } = useAeirmist();
   const [isAdminUser, setIsAdminUser] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports' | 'appeals' | 'marketplace' | 'security' | 'roles' | 'flags' | 'logs' | 'verification' | 'tickets'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports' | 'appeals' | 'marketplace' | 'security' | 'roles' | 'flags' | 'logs' | 'verification' | 'tickets' | 'system'>('dashboard');
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
 
@@ -1962,7 +2261,8 @@ export const AdminPanel = () => {
             { id: 'security', label: 'Security', icon: <Shield size={13} /> },
             { id: 'roles', label: 'Roles', icon: <Key size={13} /> },
             { id: 'flags', label: 'Flags', icon: <Sliders size={13} /> },
-            { id: 'logs', label: 'Audit Logs', icon: <History size={13} /> }
+            { id: 'logs', label: 'Audit Logs', icon: <History size={13} /> },
+            { id: 'system', label: 'System', icon: <Cpu size={13} /> }
           ].map(tab => (
             <button
               key={tab.id}
@@ -2016,6 +2316,7 @@ export const AdminPanel = () => {
           {activeTab === 'flags' && <FeatureFlagsTab db={db} addToast={addToast} />}
           {activeTab === 'logs' && <AuditLogTab db={db} />}
           {activeTab === 'verification' && <VerificationRequestsTab db={db} addToast={addToast} />}
+          {activeTab === 'system' && <SystemTab />}
         </motion.div>
 
       </div>

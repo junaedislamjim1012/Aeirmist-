@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { X, Check, Loader2, LogOut } from 'lucide-react';
 
 interface AccountSwitcherProps {
@@ -81,7 +82,7 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({ isOpen, onClos
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/10 shrink-0 border border-white/10">
                         <img 
-                          src={p.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.username}`} 
+                          src={getAvatarUrl(p.photoURL, p.username)} 
                           alt={p.username} 
                           className="w-full h-full object-cover"
                         />

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { getAvatarUrl } from '../../lib/avatar';
 import { 
   Search, 
   Mic, 
@@ -317,7 +318,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFocusChange, o
                         >
                           <div className="flex items-center gap-5 relative z-10">
                             <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 p-0.5 bg-gradient-to-tr from-white/10 to-transparent group-hover:from-aeirmist-cyan/40 transition-all">
-                              <img src={user.photoURL} className="w-full h-full object-cover rounded-[calc(1rem-2px)]" alt="Profile" />
+                              <img src={getAvatarUrl(user.photoURL)} className="w-full h-full object-cover rounded-[calc(1rem-2px)]" alt="Profile" />
                             </div>
                             <div>
                               <div className="text-base font-bold text-white flex items-center gap-2">

@@ -27,7 +27,7 @@ import { MediaQuality } from '../../services/MediaService';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { logger } from '@/src/utils/logger';
-
+import { BLANK_DP } from '../../lib/avatar';
 
 interface SignupWizardProps {
   onGoToLogin: () => void;
@@ -36,7 +36,7 @@ interface SignupWizardProps {
 }
 
 const DRAFT_KEY = 'aeirmist_signup_wizard_draft';
-const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=256";
+const DEFAULT_AVATAR = BLANK_DP;
 const DEFAULT_COVER = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -1526,23 +1526,15 @@ export const SignupWizard: React.FC<SignupWizardProps> = ({
                 WELCOME TO AEIRMIST
               </motion.span>
 
-              <span className="text-2xl sm:text-4xl font-normal tracking-tight text-white flex flex-nowrap whitespace-nowrap justify-center gap-[1px] sm:gap-1 max-w-[95vw]">
-                {Array.from(toMathBoldScript(welcomeDisplayName)).map((char, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, y: 22, filter: 'blur(12px)', scale: 0.88 }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
-                    transition={{
-                      delay: 0.3 + i * 0.05,
-                      duration: 0.55,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                    className="inline-block text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-300 drop-shadow-[0_0_22px_rgba(0,242,255,0.45)]"
-                  >
-                    {char === ' ' ? '\u00A0' : char}
-                  </motion.span>
-                ))}
-              </span>
+              <motion.h1
+                key={welcomeDisplayName}
+                initial={{ opacity: 0, y: 12, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="text-2xl sm:text-4xl font-serif italic font-medium tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-300 drop-shadow-[0_0_22px_rgba(0,242,255,0.45)] max-w-[95vw] px-2 py-1 leading-normal"
+              >
+                {welcomeDisplayName}
+              </motion.h1>
 
               <p className="text-xs text-white/60 leading-relaxed max-w-xs pt-1">
                 Your profile is initialized and ready. Welcome to the future of social connection.

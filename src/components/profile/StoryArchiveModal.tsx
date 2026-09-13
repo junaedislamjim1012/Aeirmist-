@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { 
   X, 
   Calendar, 
@@ -127,7 +128,7 @@ export const StoryArchiveModal: React.FC<StoryArchiveModalProps> = ({ isOpen, on
               uid: viewerId,
               displayName: 'User',
               username: 'user_node',
-              photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${viewerId}`
+              photoURL: getAvatarUrl(null, viewerId)
             };
           }
         } catch (err) {
@@ -487,7 +488,7 @@ export const StoryArchiveModal: React.FC<StoryArchiveModalProps> = ({ isOpen, on
                     >
                       <div className="flex items-center gap-2">
                         <img 
-                          src={vProfile.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${vProfile.uid}`} 
+                          src={getAvatarUrl(vProfile.photoURL, vProfile.uid)} 
                           alt="" 
                           referrerPolicy="no-referrer"
                           className="w-6 h-6 rounded-lg border border-white/10 shadow-lg shrink-0"

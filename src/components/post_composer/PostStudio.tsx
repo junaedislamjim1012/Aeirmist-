@@ -7,6 +7,7 @@ import {
   AlertCircle, ChevronLeft, ChevronRight, X, Clock, HelpCircle, ArrowLeft, ShieldCheck
 } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { MediaEditor } from './MediaEditor';
@@ -411,7 +412,7 @@ export const PostStudio: React.FC<PostStudioProps> = React.memo(({ onClose, init
         author: {
           displayName: profile?.displayName || 'User',
           username: profile?.username || 'user',
-          photoURL: profile?.photoURL || 'https://picsum.photos/seed/default/100',
+          photoURL: getAvatarUrl(profile?.photoURL),
           isVerified: profile?.isVerified || false
         },
         likesCount: 0,
@@ -622,7 +623,7 @@ export const PostStudio: React.FC<PostStudioProps> = React.memo(({ onClose, init
                 <div className="w-full max-w-[calc(100vw-48px)] md:max-w-md rounded-2xl border border-white/10 bg-[#060a12] p-5 md:p-6 shadow-2xl space-y-4 text-left">
                   <div className="flex items-center gap-3">
                     <img 
-                      src={profile?.photoURL || 'https://picsum.photos/seed/default/100'} 
+                      src={getAvatarUrl(profile?.photoURL)} 
                       className="w-10 h-10 rounded-full border border-white/20 object-cover" 
                       alt="" 
                     />
@@ -659,7 +660,7 @@ export const PostStudio: React.FC<PostStudioProps> = React.memo(({ onClose, init
                   <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:16px_16px]" />
                   
                   <div className="flex items-center gap-3 z-10 text-left">
-                    <img src={profile?.photoURL || 'https://picsum.photos/seed/default/100'} className="w-9 h-9 rounded-full border border-white/20 object-cover" alt="" />
+                    <img src={getAvatarUrl(profile?.photoURL)} className="w-9 h-9 rounded-full border border-white/20 object-cover" alt="" />
                     <div>
                       <div className="text-xs font-bold text-white flex items-center gap-1">
                         <span>@{profile?.username || 'user'}</span>
@@ -792,7 +793,7 @@ export const PostStudio: React.FC<PostStudioProps> = React.memo(({ onClose, init
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <div className="flex items-center gap-3">
               <img 
-                src={profile?.photoURL || 'https://picsum.photos/seed/default/100'} 
+                src={getAvatarUrl(profile?.photoURL)} 
                 className="w-9 h-9 rounded-full border border-white/20 object-cover" 
                 alt="" 
               />

@@ -23,6 +23,7 @@ import {
   Share2
 } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { MediaQuality } from '../../services/MediaService';
 import { collection, doc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { logger } from '@/src/utils/logger';
@@ -294,7 +295,7 @@ export const AeirmistVideoUploader: React.FC<AeirmistVideoUploaderProps> = ({ on
         id,
         creatorId: profile?.id || 'guest_creator',
         creatorName: profile?.displayName || profile?.username || 'Guest',
-        creatorAvatar: profile?.photoURL || 'https://picsum.photos/seed/avatar/200/200',
+        creatorAvatar: getAvatarUrl(profile?.photoURL, profile?.id),
         videoURL: finalVideoUrl,
         caption: title,
         description,

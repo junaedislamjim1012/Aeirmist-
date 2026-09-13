@@ -29,6 +29,7 @@ import {
 import { NotificationItem } from './NotificationItem';
 import type { Notification } from '../../types/notifications';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { logger } from '@/src/utils/logger';
 
 import { 
@@ -274,7 +275,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             timestampMs: d.createdAt?.toMillis() || Date.now(),
             user: {
               name: d.user?.name || d.fromUser?.displayName || 'Aeirmist Citizen',
-              avatar: d.user?.avatar || d.fromUser?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${doc.id}`,
+              avatar: getAvatarUrl(d.user?.avatar || d.fromUser?.photoURL, doc.id),
               username: d.user?.username || (d.fromUser?.displayName ? d.fromUser.displayName.toLowerCase().replace(/\s+/g, '') : 'aeirmist_network'),
               isVerified: d.user?.isVerified || false
             }
@@ -523,13 +524,24 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   };
 
   return (
-    <motion.div 
-      ref={centerRef}
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 100 }}
-      className="fixed inset-y-0 right-0 w-full md:w-[465px] z-[100] bg-neutral-950/95 backdrop-blur-3xl border-l border-white/15 shadow-[-25px_0_75px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col"
-    >
+    <>
+      {/* Dark backdrop overlay for closing panel on tap */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-md"
+        onClick={onClose}
+      />
+      <motion.div 
+        ref={centerRef}
+        initial={{ opacity: 0, x: '100%' }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+        className="fixed inset-y-0 right-0 w-full md:w-[465px] z-[1000] bg-neutral-950/98 backdrop-blur-3xl border-l border-white/15 shadow-[-25px_0_75px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col"
+      >
       {/* Header Panel */}
       <header className="p-3.5 sm:p-5 border-b border-white/15 bg-black/60 backdrop-blur-3xl relative z-10">
         <div className="flex items-center justify-between gap-2 min-w-0">
@@ -667,6 +679,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
 
     </motion.div>
+    </>
   );
 };
 

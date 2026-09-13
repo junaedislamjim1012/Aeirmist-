@@ -15,6 +15,7 @@ import { collection, addDoc, serverTimestamp, getDoc, doc, updateDoc, arrayUnion
 import { mapAuthError } from '../../utils/authErrorMapper';
 import { SignupWizard } from './SignupWizard';
 import { logger } from '@/src/utils/logger';
+import { getAvatarUrl } from '../../lib/avatar';
 
 
 type AuthView = 'login' | 'signup' | 'forgot' | 'pairing' | 'reset' | 'saved_accounts' | 'saved_accounts_login' | 'two_factor';
@@ -721,7 +722,7 @@ export const AuthSystem: React.FC = () => {
                           
                           <div className="relative shrink-0">
                             <img
-                              src={account.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(account.username || 'Aeirmist')}`}
+                              src={getAvatarUrl(account.photoURL, account.username)}
                               alt={account.displayName}
                               className="w-11 h-11 rounded-full object-cover border-2 border-[var(--color-aeirmist-cyan)] shadow-[0_0_12px_rgba(0,242,255,0.2)]"
                               referrerPolicy="no-referrer"
@@ -783,7 +784,7 @@ export const AuthSystem: React.FC = () => {
                         {/* Glow back-pulse */}
                         <div className="absolute inset-0 bg-[var(--color-aeirmist-cyan)]/25 rounded-full blur-xl scale-110 animate-pulse" />
                         <img
-                          src={selectedAccount.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(selectedAccount.username || 'Aeirmist')}`}
+                          src={getAvatarUrl(selectedAccount.photoURL, selectedAccount.username)}
                           alt={selectedAccount.displayName}
                           className="relative w-20 h-20 rounded-full object-cover border-2 border-[var(--color-aeirmist-cyan)] shadow-[0_0_20px_rgba(0,242,255,0.3)]"
                           referrerPolicy="no-referrer"

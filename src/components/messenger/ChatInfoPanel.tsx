@@ -25,6 +25,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { collection, query, where, getDocs, limit, orderBy, doc, updateDoc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { Chat } from '../../types/messenger';
 import { logger } from '@/src/utils/logger';
@@ -53,10 +54,6 @@ export const ChatInfoPanel = ({
   const [editValue, setEditValue] = useState<string>('');
   const [showPermissionsToggle, setShowPermissionsToggle] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
-
-  const getAvatarUrl = (photo: string | null | undefined, memberId: string) => {
-    return photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${memberId}`;
-  };
 
   const otherId = chat.otherParticipantId || chat.profileIds?.find(id => id !== profile?.id);
   const [searchPopoverOpen, setSearchPopoverOpen] = useState(false);
@@ -255,7 +252,7 @@ export const ChatInfoPanel = ({
         <div className="relative inline-block mb-4 cursor-pointer group" onClick={handleVisitProfile}>
           <div className="w-24 h-24 rounded-3xl p-[2px] bg-gradient-to-tr from-aeirmist-cyan to-aeirmist-magenta relative z-10 group-hover:scale-105 transition-transform">
             <div className="w-full h-full rounded-[22px] border-4 border-aeirmist-bg overflow-hidden relative">
-              <img src={otherProfile?.photoURL || chat.photo} alt={otherProfile?.displayName || chat.name} className="w-full h-full object-cover" />
+              <img src={getAvatarUrl(otherProfile?.photoURL || chat.photo)} alt={otherProfile?.displayName || chat.name} className="w-full h-full object-cover" />
               {/* Scanline Effect */}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-aeirmist-cyan/10 to-transparent h-1/2 w-full animate-scan pointer-events-none" />
             </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, Eye, EyeOff, ShieldCheck, Loader2, Sparkles, Check, AlertCircle, User, Mail, ShieldAlert } from 'lucide-react';
 import { useAeirmist } from '../../context/AeirmistContext';
+import { getAvatarUrl } from '../../lib/avatar';
 import { useTheme } from '../../context/ThemeContext';
 import { getAuth, EmailAuthProvider, linkWithCredential, updatePassword } from 'firebase/auth';
 import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
@@ -145,7 +146,7 @@ export const CompleteYourAccountScreen: React.FC = () => {
     }
   };
 
-  const userPhoto = profile?.photoURL || user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'aeirmist'}`;
+  const userPhoto = getAvatarUrl(profile?.photoURL || user?.photoURL, user?.uid);
   const userDisplayName = profile?.displayName || user?.displayName || 'Aeirmist Node';
   const userUsername = profile?.username ? `@${profile.username}` : 'Username not set';
   const userEmail = user?.email || profile?.personalEmail || 'verified@aeirmist.social';
