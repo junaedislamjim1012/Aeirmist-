@@ -3,6 +3,7 @@ import SupportInboxTab from './SupportInboxTab';
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/src/utils/logger';
 import { getAvatarUrl } from '../../lib/avatar';
+import { applyDynamicFavicon } from '../../utils/favicon';
 
 import {
  motion, AnimatePresence } from 'motion/react';
@@ -251,26 +252,22 @@ const SystemTab = () => {
 
       if (mode === 'dark') {
         setDarkLogo(dataUrl);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('aeirmist_custom_logo', dataUrl);
+        }
         await updateAppBranding({ darkLogoUrl: dataUrl });
-        addToast({ title: 'Dark Logo Uploaded', message: 'Dark theme logo saved & applied as main logo.', type: 'success' });
+        applyDynamicFavicon(dataUrl);
+        fetch('/api/admin/sync-logo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logoUrl: dataUrl }) }).catch(() => {});
+        addToast({ title: 'Dark Logo Uploaded', message: 'Custom dark logo applied as main logo and app icon.', type: 'success' });
       } else {
         setLightLogo(dataUrl);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('aeirmist_custom_logo', dataUrl);
+        }
         await updateAppBranding({ lightLogoUrl: dataUrl });
-        addToast({ title: 'Light Logo Uploaded', message: 'Light theme logo saved & applied as main logo.', type: 'success' });
-      }
-
-      if (uploadMedia) {
-        uploadMedia(file, 'system/logos').then(async (storageUrl) => {
-          if (storageUrl) {
-            if (mode === 'dark') {
-              setDarkLogo(storageUrl);
-              await updateAppBranding({ darkLogoUrl: storageUrl });
-            } else {
-              setLightLogo(storageUrl);
-              await updateAppBranding({ lightLogoUrl: storageUrl });
-            }
-          }
-        }).catch(err => logger.warn('Background storage upload note:', err));
+        applyDynamicFavicon(dataUrl);
+        fetch('/api/admin/sync-logo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logoUrl: dataUrl }) }).catch(() => {});
+        addToast({ title: 'Light Logo Uploaded', message: 'Custom light logo applied as main logo and app icon.', type: 'success' });
       }
     } catch (err: any) {
       logger.error('Failed to process logo image:', err);

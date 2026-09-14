@@ -1,10 +1,10 @@
 {
-  "id": "/Aeirmist-/",
-  "scope": "/Aeirmist-/",
+  "id": "aeirmist-pwa",
+  "scope": "./",
   "name": "Aeirmist",
   "short_name": "Aeirmist",
   "description": "A hyper-visual digital sanctuary for the next generation. Connect with the Aeirmist social matrix.",
-  "start_url": "/Aeirmist-/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#030712",
@@ -13,19 +13,19 @@
   "categories": ["social", "lifestyle", "entertainment"],
   "icons": [
     {
-      "src": "/Aeirmist-/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/Aeirmist-/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/Aeirmist-/icon-maskable-512.png",
+      "src": "icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -36,22 +36,22 @@
       "name": "Feed",
       "short_name": "Feed",
       "description": "View latest posts and stories",
-      "url": "/Aeirmist-/?tab=feed",
-      "icons": [{ "src": "/Aeirmist-/icon-192.png", "sizes": "192x192" }]
+      "url": "./?tab=feed",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Messages",
       "short_name": "Inbox",
       "description": "Open private neural messages",
-      "url": "/Aeirmist-/?tab=messenger",
-      "icons": [{ "src": "/Aeirmist-/icon-192.png", "sizes": "192x192" }]
+      "url": "./?tab=messenger",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Marketplace",
       "short_name": "Shop",
       "description": "Explore store items and merchandise",
-      "url": "/Aeirmist-/?tab=discover",
-      "icons": [{ "src": "/Aeirmist-/icon-192.png", "sizes": "192x192" }]
+      "url": "./?tab=discover",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

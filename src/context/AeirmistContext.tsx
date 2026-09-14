@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { applyDynamicFavicon } from '../utils/favicon';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -412,6 +413,11 @@ export const AeirmistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    const activeLogo = appBranding?.darkLogoUrl || appBranding?.lightLogoUrl;
+    applyDynamicFavicon(activeLogo);
+  }, [appBranding]);
 
   const updateAppBranding = useCallback(async (newBranding: Partial<AppBranding>) => {
     setAppBranding(prev => {

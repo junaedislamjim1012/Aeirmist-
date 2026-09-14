@@ -73,6 +73,56 @@ async function getSpotifyAccessToken(): Promise<string> {
   return cachedSpotifyToken;
 }
 
+async function syncAppBrandingIcons(customLogoDataUrl?: string) {
+  try {
+    let logoDataUrl = customLogoDataUrl;
+    if (!logoDataUrl) {
+      const { getFirestoreAdmin } = await import("./src/services/FirebaseAdminService");
+      const adminDb = getFirestoreAdmin();
+      const docSnap = await adminDb.collection("system_config").doc("app_branding").get();
+      if (docSnap.exists) {
+        const data = docSnap.data();
+        logoDataUrl = data?.darkLogoUrl || data?.lightLogoUrl;
+      }
+    }
+
+    if (!logoDataUrl || typeof logoDataUrl !== "string" || !logoDataUrl.startsWith("data:image/")) {
+      return;
+    }
+
+    const sharp = (await import("sharp")).default;
+    const base64Data = logoDataUrl.replace(/^data:image\/\w+;base64,/, "");
+    const imageBuffer = Buffer.from(base64Data, "base64");
+
+    const png512 = await sharp(imageBuffer).resize(512, 512, { fit: "contain", background: { r: 3, g: 7, b: 18, alpha: 1 } }).png().toBuffer();
+    const png192 = await sharp(imageBuffer).resize(192, 192, { fit: "contain", background: { r: 3, g: 7, b: 18, alpha: 1 } }).png().toBuffer();
+    const png64  = await sharp(imageBuffer).resize(64, 64, { fit: "contain", background: { r: 3, g: 7, b: 18, alpha: 1 } }).png().toBuffer();
+    const png180 = await sharp(imageBuffer).resize(180, 180, { fit: "contain", background: { r: 3, g: 7, b: 18, alpha: 1 } }).png().toBuffer();
+
+    const base64Png = png512.toString("base64");
+    const svgWrapper = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#030712"/>
+  <image href="data:image/png;base64,${base64Png}" x="0" y="0" width="512" height="512"/>
+</svg>`;
+
+    const targets = ["public", "dist"];
+    for (const dir of targets) {
+      if (fs.existsSync(dir)) {
+        fs.writeFileSync(path.join(dir, "favicon.png"), png64);
+        fs.writeFileSync(path.join(dir, "apple-touch-icon.png"), png180);
+        fs.writeFileSync(path.join(dir, "icon-192.png"), png192);
+        fs.writeFileSync(path.join(dir, "icon-512.png"), png512);
+        fs.writeFileSync(path.join(dir, "icon-maskable-512.png"), png512);
+        fs.writeFileSync(path.join(dir, "logo-full.png"), png512);
+        fs.writeFileSync(path.join(dir, "favicon.svg"), svgWrapper);
+      }
+    }
+    console.log("[App Branding Sync] Successfully synced custom logo to all public & dist icon files!");
+  } catch (err) {
+    console.warn("[App Branding Sync Note]:", err);
+  }
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(3000);
@@ -753,6 +803,35 @@ Return JSON object: { "suggestion": string or null }`,
     }
   });
 
+  app.post("/api/admin/sync-logo", async (req: express.Request, res: express.Response) => {
+    try {
+      const { logoUrl } = req.body;
+      if (logoUrl) {
+        await syncAppBrandingIcons(logoUrl);
+      }
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Explicit route handler for favicon and PWA app icons with cache-busting headers
+  app.get(["/favicon.png", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png", "/apple-touch-icon.png", "/logo-full.png"], (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const fileName = path.basename(req.path);
+    const publicFile = path.join(process.cwd(), "public", fileName);
+    const distFile = path.join(process.cwd(), "dist", fileName);
+    
+    const targetFile = fs.existsSync(publicFile) ? publicFile : (fs.existsSync(distFile) ? distFile : null);
+    if (targetFile) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      res.setHeader("Content-Type", "image/png");
+      return res.sendFile(targetFile);
+    }
+    next();
+  });
+
   // Vite middleware for development
   if (!isProduction) {
     const vite = await createViteServer({
@@ -789,6 +868,9 @@ Return JSON object: { "suggestion": string or null }`,
 
   // --- Global Error Handlers ---
   app.use(globalErrorHandler);
+
+  // Sync custom branding icons at boot
+  syncAppBrandingIcons();
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

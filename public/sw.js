@@ -1,13 +1,8 @@
-const CACHE_NAME = 'aeirmist-static-v3';
+const CACHE_NAME = 'aeirmist-static-v100';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-512.png',
-  '/apple-touch-icon.png',
-  '/favicon.png'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
